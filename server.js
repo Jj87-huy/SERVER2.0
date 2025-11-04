@@ -123,6 +123,6 @@ app.post("/chat", async (req, res) => {
 // ===========================
 // 🚀 Start Server
 // ===========================
-app.listen(0.0.0.0, 8080, () =>
+app.listen(8080, () =>
   console.log(`🚀 Server running on port https://0.0.0.0:${process.env.PORT}`)
 );
