@@ -1,7 +1,6 @@
 const express = require("express");
 const https = require("https");
 const vm = require("vm");
-const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
@@ -218,5 +217,5 @@ app.delete("/data/:id", async (req, res) => {
 // ===========================
 // 🚀 Start Server
 // ===========================
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
