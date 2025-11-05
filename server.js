@@ -163,6 +163,19 @@ app.post("/chat", async (req, res) => {
 });
 
 // ===========================
+// 🧾 API xem dữ liệu MongoDB
+// ===========================
+app.get("/data", async (req, res) => {
+  try {
+    const allData = await ChatData.find().sort({ time: -1 }); // mới nhất trước
+    res.json(allData);
+  } catch (err) {
+    console.error("❌ Lỗi khi lấy dữ liệu:", err);
+    res.status(500).json({ error: "Không thể lấy dữ liệu MongoDB" });
+  }
+});
+
+// ===========================
 // 🚀 Start Server
 // ===========================
 const PORT = process.env.PORT || 8080;
