@@ -5,7 +5,6 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -18,20 +17,22 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
-app.options("*", cors()); // ✅ Cho phép preflight request (quan trọng với POST).
+app.options("*", cors());
 
 // ===========================
 // ⚙️ MongoDB Setup
 // ===========================
-const DATA= "mongodb+srv://admin:RBbFpKyGrn5vd3@miniplaydata.s3wquxr.mongodb.net/?appName=MiniplayData"
+const DATA = "mongodb+srv://admin:RBbFpKyGrn5vd3@miniplaydata.s3wquxr.mongodb.net/?appName=MiniplayData";
 mongoose.connect(DATA)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB error:", err));
 
+// ✅ Cập nhật Schema có thêm trường `link`
 const ChatSchema = new mongoose.Schema({
-  keyword: String,
-  answer: String,
-  source: String,
+  keyword: { type: String, required: true },
+  answer: { type: String, required: true },
+  link: { type: String, default: "" }, // 🔗 thêm trường link
+  source: { type: String, default: "manual" },
   time: { type: Date, default: Date.now }
 });
 const ChatData = mongoose.model("ChatData", ChatSchema);
@@ -69,7 +70,7 @@ const MODULE_URLS = {
 };
 
 // ===========================
-// ⚙️ Load toàn bộ module (tự động fallback)
+// ⚙️ Load toàn bộ module (có fallback)
 // ===========================
 let ai1, ai2, ai3, ai4;
 
@@ -127,29 +128,25 @@ app.post("/chat", async (req, res) => {
   if (!msg) return res.json({ reply: "Bạn chưa nhập gì nè 😅" });
 
   try {
-    // 🔍 Phân tích song song
     const [keywords, sanity, domain] = await Promise.all([
       ai1.analyzeText(msg),
       ai4.checkSanity(msg),
       ai3.detectDomain(msg)
     ]);
 
-    // 🧠 Nếu là câu troll/vô nghĩa
     if (sanity.isStupid) {
       return res.json({ reply: sanity.reply });
     }
 
-    // 🔎 Tìm trong DB
     const all = await loadData();
     const found = all.find(e => e.keyword.toLowerCase() === keywords.toLowerCase());
+
     if (found) {
-      return res.json({ reply: found.answer });
+      // ✅ Nếu có link => trả kèm
+      return res.json({ reply: found.answer, link: found.link || null });
     }
 
-    // 🤖 Tạo câu trả lời mới
     const answer = await ai2.generateAnswer(msg);
-
-    // 💾 Lưu nếu thuộc lĩnh vực IT
     if (domain === "IT") {
       await saveLearned({ keyword: keywords, answer });
       console.log(`💾 Lưu vào MongoDB: ${keywords}`);
@@ -165,11 +162,9 @@ app.post("/chat", async (req, res) => {
 // ===========================
 // 🧾 API quản lý dữ liệu MongoDB
 // ===========================
-
-// 📥 Lấy toàn bộ dữ liệu
 app.get("/data", async (req, res) => {
   try {
-    const allData = await ChatData.find().sort({ time: -1 }); // mới nhất lên trước
+    const allData = await ChatData.find().sort({ time: -1 });
     res.json(allData);
   } catch (err) {
     console.error("❌ Lỗi khi lấy dữ liệu:", err);
@@ -177,15 +172,14 @@ app.get("/data", async (req, res) => {
   }
 });
 
-// ➕ Thêm mới dữ liệu
 app.post("/data", async (req, res) => {
   try {
-    const { keyword, answer } = req.body;
+    const { keyword, answer, link } = req.body;
     if (!keyword || !answer) {
       return res.status(400).json({ error: "Thiếu keyword hoặc answer" });
     }
 
-    const newEntry = new ChatData({ keyword, answer, source: "manual" });
+    const newEntry = new ChatData({ keyword, answer, link: link || "", source: "manual" });
     await newEntry.save();
     res.json({ message: "✅ Đã thêm dữ liệu thành công!" });
   } catch (err) {
@@ -194,16 +188,15 @@ app.post("/data", async (req, res) => {
   }
 });
 
-// ✏️ Sửa dữ liệu theo ID
 app.put("/data/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { keyword, answer } = req.body;
+    const { keyword, answer, link } = req.body;
     if (!keyword || !answer) {
       return res.status(400).json({ error: "Thiếu keyword hoặc answer" });
     }
 
-    await ChatData.findByIdAndUpdate(id, { keyword, answer });
+    await ChatData.findByIdAndUpdate(id, { keyword, answer, link: link || "" });
     res.json({ message: "✏️ Cập nhật thành công!" });
   } catch (err) {
     console.error("❌ Lỗi khi cập nhật:", err);
@@ -211,7 +204,6 @@ app.put("/data/:id", async (req, res) => {
   }
 });
 
-// 🗑️ Xóa dữ liệu theo ID
 app.delete("/data/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -222,7 +214,6 @@ app.delete("/data/:id", async (req, res) => {
     res.status(500).json({ error: "Không thể xóa dữ liệu" });
   }
 });
-
 
 // ===========================
 // 🚀 Start Server
