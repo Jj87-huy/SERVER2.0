@@ -7,7 +7,7 @@ async function detectDomain(text) {
   try {
     const prompt = `Câu "${text}" thuộc lĩnh vực nào?
 Chỉ trả về một trong hai từ:
-- "IT" nếu liên quan đến công nghệ thông tin, máy tính, AI, phần mềm, phần cứng...
+- "IT" nếu liên quan đến công nghệ thông tin, máy tính, sửa chữa máy tính, phần mềm, phần cứng...
 - "OTHER" nếu không.`;
 
     const result = await model.generateContent(prompt);
