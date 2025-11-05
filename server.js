@@ -12,10 +12,7 @@ const DATA= "mongodb+srv://admin:RBbFpKyGrn5vd3@miniplaydata.s3wquxr.mongodb.net
 // ===========================
 // ⚙️ MongoDB Setup
 // ===========================
-mongoose.connect(DATA, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect(DATA)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB error:", err));
 
