@@ -105,7 +105,9 @@ const dup = {
   "router": "router",
   "modem": "router",
   "switch mạng": "network switch",
+  "switch": "network switch",
   "hub mạng": "network hub",
+  "hub": "network hub",
   "wifi": "wireless network",
   "mạng không dây": "wireless network",
 
