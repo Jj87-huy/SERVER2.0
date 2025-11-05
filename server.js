@@ -18,7 +18,7 @@ app.use(cors({
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
 }));
-app.options("*", cors()); // ✅ Cho phép preflight request (quan trọng với POST)
+app.options("*", cors()); // ✅ Cho phép preflight request (quan trọng với POST).
 
 // ===========================
 // ⚙️ MongoDB Setup
