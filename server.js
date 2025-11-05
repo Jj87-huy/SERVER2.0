@@ -3,6 +3,8 @@ const https = require("https");
 const vm = require("vm");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const cors = require("cors");
+
 
 dotenv.config();
 const app = express();
