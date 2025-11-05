@@ -8,10 +8,11 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+const DATA= "mongodb+srv://admin:RBbFpKyGrn5vd3@miniplaydata.s3wquxr.mongodb.net/?appName=MiniplayData"
 // ===========================
 // ⚙️ MongoDB Setup
 // ===========================
-mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect(DATA, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
