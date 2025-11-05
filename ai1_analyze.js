@@ -6,7 +6,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 async function analyzeText(text) {
   try {
-    const prompt = `Phân tích câu "${text}" và trả về 3 từ khóa chính (giữ nguyên tiếng Việt, phân tách bằng dấu phẩy).`;
+    const prompt = `Phân tích câu "${text}", xem người dùng nói vấn đề chính gì.`;
     const result = await model.generateContent(prompt);
     const keywords = (await result.response.text()).trim();
     return keywords || "không có từ khóa";
