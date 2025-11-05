@@ -1,16 +1,18 @@
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const { GoogleGenerativeAI } = require ("@google/generative-ai");
-
-const genAI = new GoogleGenerativeAI(process.env.AI1_KEY);
+const genAI = new GoogleGenerativeAI("AIzaSyAGZcayD9G0-j0CMyOI9Znwd2U19_rpvR4");
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-module.exports = {
-  analyzeText: async analyzeText(text) {
+async function analyzeText(text) {
   try {
-    const result = await model.generateContent(`Phân tích câu "${text}" và trả về 3 từ khóa chính (giữ nguyên tiếng Việt).`);
-    return result.response.text().trim();
-  } catch {
+    const prompt = `Phân tích câu "${text}" và trả về 3 từ khóa chính (giữ nguyên tiếng Việt, phân tách bằng dấu phẩy).`;
+    const result = await model.generateContent(prompt);
+    const keywords = (await result.response.text()).trim();
+    return keywords || "không có từ khóa";
+  } catch (err) {
+    console.error("[analyzeText ERR]", err);
     return "phân tích lỗi";
   }
 }
-}
+
+module.exports = { analyzeText };
