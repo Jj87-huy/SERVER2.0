@@ -9,7 +9,7 @@ async function generateAnswer(text) {
     const prompt = `
 Trả lời cho câu hỏi: "${text}".
 Yêu cầu:
-- Viết câu trả lời bằng tiếng Việt, tự nhiên, dễ hiểu.
+- Viết câu trả lời bằng tiếng Việt, tự nhiên, ngắn gọn(1-2 câu), dễ hiểu.
 - Không dùng danh sách, bullet, markdown hoặc ký hiệu như *, **, -, •.
     `;
 
