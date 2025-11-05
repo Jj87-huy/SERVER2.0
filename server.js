@@ -8,17 +8,20 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-const cors = require("cors");
+// ===========================
+// 🌐 CORS Setup
+// ===========================
 app.use(cors({
   origin: ["https://kbot-ai.name.vn", "http://localhost:3000"],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
 }));
+app.options("*", cors()); // ✅ Cho phép preflight request (quan trọng với POST)
 
-const DATA= "mongodb+srv://admin:RBbFpKyGrn5vd3@miniplaydata.s3wquxr.mongodb.net/?appName=MiniplayData"
 // ===========================
 // ⚙️ MongoDB Setup
 // ===========================
+const DATA= "mongodb+srv://admin:RBbFpKyGrn5vd3@miniplaydata.s3wquxr.mongodb.net/?appName=MiniplayData"
 mongoose.connect(DATA)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB error:", err));
@@ -29,7 +32,6 @@ const ChatSchema = new mongoose.Schema({
   source: String,
   time: { type: Date, default: Date.now }
 });
-
 const ChatData = mongoose.model("ChatData", ChatSchema);
 
 // ===========================
