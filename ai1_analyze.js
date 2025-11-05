@@ -38,9 +38,10 @@ const dup = {
   "hard disk drive": "hard drive",
 
   // ⚡ SSD
-  "ssd": "solid state drive",
-  "ổ cứng ssd": "solid state drive",
-  "solid drive": "solid state drive",
+  "ssd": "solid state",
+  "ổ cứng ssd": "solid state",
+  "solid drive": "solid state",
+  "solid state drive":"solid state",
 
   // 🔋 RAM / Bộ nhớ
   "ram": "memory",
