@@ -6,7 +6,10 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 async function analyzeText(text) {
   try {
-    const prompt = `Phân tích, định nghĩa ý chính của câu "${text}" (VD đặt tên: Định nghĩa Quạt CPU). LƯU Ý: phải nói ngắn gọn, không viết gì thêm.`;
+    const prompt = `Phân tích, định nghĩa ý chính của câu "${text}".
+     LƯU Ý:
+    - VD đặt tên: Định nghĩa Quạt CPU. 
+    - Không viết gì thêm.`;
     const result = await model.generateContent(prompt);
     const keywords = (await result.response.text()).trim();
     return keywords || "không có từ khóa";
