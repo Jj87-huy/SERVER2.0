@@ -163,17 +163,66 @@ app.post("/chat", async (req, res) => {
 });
 
 // ===========================
-// 🧾 API xem dữ liệu MongoDB
+// 🧾 API quản lý dữ liệu MongoDB
 // ===========================
+
+// 📥 Lấy toàn bộ dữ liệu
 app.get("/data", async (req, res) => {
   try {
-    const allData = await ChatData.find().sort({ time: -1 }); // mới nhất trước
+    const allData = await ChatData.find().sort({ time: -1 }); // mới nhất lên trước
     res.json(allData);
   } catch (err) {
     console.error("❌ Lỗi khi lấy dữ liệu:", err);
     res.status(500).json({ error: "Không thể lấy dữ liệu MongoDB" });
   }
 });
+
+// ➕ Thêm mới dữ liệu
+app.post("/data", async (req, res) => {
+  try {
+    const { keyword, answer } = req.body;
+    if (!keyword || !answer) {
+      return res.status(400).json({ error: "Thiếu keyword hoặc answer" });
+    }
+
+    const newEntry = new ChatData({ keyword, answer, source: "manual" });
+    await newEntry.save();
+    res.json({ message: "✅ Đã thêm dữ liệu thành công!" });
+  } catch (err) {
+    console.error("❌ Lỗi khi thêm dữ liệu:", err);
+    res.status(500).json({ error: "Không thể thêm dữ liệu" });
+  }
+});
+
+// ✏️ Sửa dữ liệu theo ID
+app.put("/data/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { keyword, answer } = req.body;
+    if (!keyword || !answer) {
+      return res.status(400).json({ error: "Thiếu keyword hoặc answer" });
+    }
+
+    await ChatData.findByIdAndUpdate(id, { keyword, answer });
+    res.json({ message: "✏️ Cập nhật thành công!" });
+  } catch (err) {
+    console.error("❌ Lỗi khi cập nhật:", err);
+    res.status(500).json({ error: "Không thể cập nhật dữ liệu" });
+  }
+});
+
+// 🗑️ Xóa dữ liệu theo ID
+app.delete("/data/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await ChatData.findByIdAndDelete(id);
+    res.json({ message: "🗑️ Đã xóa dữ liệu thành công!" });
+  } catch (err) {
+    console.error("❌ Lỗi khi xóa dữ liệu:", err);
+    res.status(500).json({ error: "Không thể xóa dữ liệu" });
+  }
+});
+
 
 // ===========================
 // 🚀 Start Server
