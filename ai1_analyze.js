@@ -1,3 +1,4 @@
+// analyze-text.js
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI("AIzaSyAGZcayD9G0-j0CMyOI9Znwd2U19_rpvR4");
@@ -10,7 +11,7 @@ async function analyzeText(text) {
     const keywords = (await result.response.text()).trim();
     return keywords || "không có từ khóa";
   } catch (err) {
-    console.error("[analyzeText ERR]", err);
+    console.error("[AI1/analyzeText]❌", err.message);
     return "phân tích lỗi";
   }
 }
