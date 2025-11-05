@@ -111,7 +111,7 @@ async function saveLearned(entry) {
 // ===========================
 // 💬 API /chat
 // ===========================
-app.post("/chat", async (req, res) => {
+app.post("https://server2-0-87tx.onrender.com/chat", async (req, res) => {
   const msg = req.body.message?.trim();
   if (!msg) return res.json({ reply: "Bạn chưa nhập gì nè 😅" });
 
