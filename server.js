@@ -14,7 +14,8 @@ app.use(express.json());
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
-}).then(() => console.log("✅ MongoDB connected"))
+})
+  .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB error:", err));
 
 const ChatSchema = new mongoose.Schema({
@@ -40,7 +41,9 @@ async function loadRemoteModule(url) {
           const sandbox = { module: {}, exports: {}, require, console, process };
           script.runInNewContext(sandbox);
           resolve(sandbox.module.exports);
-        } catch (err) { reject(err); }
+        } catch (err) {
+          reject(err);
+        }
       });
     }).on("error", reject);
   });
@@ -57,29 +60,49 @@ const MODULE_URLS = {
 };
 
 // ===========================
-// ⚙️ Load toàn bộ module
+// ⚙️ Load toàn bộ module (tự động fallback)
 // ===========================
 let ai1, ai2, ai3, ai4;
 
 (async () => {
-  try { ai1 = await loadRemoteModule(MODULE_URLS.ai1); console.log("[GITHUB]✅ AI1 loaded"); } 
-  catch (e) { console.warn("[GITHUB]⚠️ Fallback AI1:", e.message); ai1 = { analyzeText: async t => t }; }
+  try {
+    ai1 = await loadRemoteModule(MODULE_URLS.ai1);
+    console.log("[GITHUB]✅ AI1 loaded");
+  } catch (e) {
+    console.warn("[GITHUB]⚠️ Fallback AI1:", e.message);
+    ai1 = { analyzeText: async t => t };
+  }
 
-  try { ai2 = await loadRemoteModule(MODULE_URLS.ai2); console.log("[GITHUB]✅ AI2 loaded"); } 
-  catch (e) { console.warn("[GITHUB]⚠️ Fallback AI2:", e.message); ai2 = { generateAnswer: async t => "Fallback answer." }; }
+  try {
+    ai2 = await loadRemoteModule(MODULE_URLS.ai2);
+    console.log("[GITHUB]✅ AI2 loaded");
+  } catch (e) {
+    console.warn("[GITHUB]⚠️ Fallback AI2:", e.message);
+    ai2 = { generateAnswer: async t => "Fallback answer." };
+  }
 
-  try { ai3 = await loadRemoteModule(MODULE_URLS.ai3); console.log("[GITHUB]✅ AI3 loaded"); } 
-  catch (e) { console.warn("[GITHUB]⚠️ Fallback AI3:", e.message); ai3 = { detectDomain: async t => "IT" }; }
+  try {
+    ai3 = await loadRemoteModule(MODULE_URLS.ai3);
+    console.log("[GITHUB]✅ AI3 loaded");
+  } catch (e) {
+    console.warn("[GITHUB]⚠️ Fallback AI3:", e.message);
+    ai3 = { detectDomain: async t => "OTHER" };
+  }
 
-  try { ai4 = await loadRemoteModule(MODULE_URLS.ai4); console.log("[GITHUB]✅ AI4 loaded"); } 
-  catch (e) { console.warn("[GITHUB]⚠️ Fallback AI4:", e.message); ai4 = { checkSanity: async t => ({ isStupid: false }) }; }
+  try {
+    ai4 = await loadRemoteModule(MODULE_URLS.ai4);
+    console.log("[GITHUB]✅ AI4 loaded");
+  } catch (e) {
+    console.warn("[GITHUB]⚠️ Fallback AI4:", e.message);
+    ai4 = { checkSanity: async t => ({ isStupid: false, reply: "" }) };
+  }
 })();
 
 // ===========================
-// 📦 Load & Save từ MongoDB
+// 📦 MongoDB helpers
 // ===========================
 async function loadData() {
-  return await ChatData.find();
+  return ChatData.find();
 }
 
 async function saveLearned(entry) {
@@ -95,22 +118,32 @@ app.post("/chat", async (req, res) => {
   if (!msg) return res.json({ reply: "Bạn chưa nhập gì nè 😅" });
 
   try {
-    const [analyze, sanity, domain] = await Promise.all([
+    // 🔍 Phân tích song song
+    const [keywords, sanity, domain] = await Promise.all([
       ai1.analyzeText(msg),
       ai4.checkSanity(msg),
       ai3.detectDomain(msg)
     ]);
 
-    if (sanity.isStupid) return res.json({ reply: sanity.reply });
+    // 🧠 Nếu là câu troll/vô nghĩa
+    if (sanity.isStupid) {
+      return res.json({ reply: sanity.reply });
+    }
 
+    // 🔎 Tìm trong DB
     const all = await loadData();
-    const found = all.find(e => e.keyword.toLowerCase() === analyze.toLowerCase());
-    if (found) return res.json({ reply: found.answer });
+    const found = all.find(e => e.keyword.toLowerCase() === keywords.toLowerCase());
+    if (found) {
+      return res.json({ reply: found.answer });
+    }
 
+    // 🤖 Tạo câu trả lời mới
     const answer = await ai2.generateAnswer(msg);
 
+    // 💾 Lưu nếu thuộc lĩnh vực IT
     if (domain === "IT") {
-      await saveLearned({ keyword: analyze, answer });
+      await saveLearned({ keyword: keywords, answer });
+      console.log(`💾 Lưu vào MongoDB: ${keywords}`);
     }
 
     res.json({ reply: answer });
@@ -123,6 +156,5 @@ app.post("/chat", async (req, res) => {
 // ===========================
 // 🚀 Start Server
 // ===========================
-app.listen(8080, () =>
-  console.log(`🚀 Server running on port https://0.0.0.0:${process.env.PORT}`)
-);
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
