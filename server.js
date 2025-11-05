@@ -8,13 +8,13 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-let PORT = process.env.PORT;
+let PORTS = process.env.PORT;
 let HOST = "0.0.0.0";
 
 const cors = require("cors");
 app.use(cors({
   origin: ["https://kbot-ai.name.vn", "http://localhost:3000"],
-  methods: ["GET", "POST", "OPTIONS"],
+  methods: ["GET", "POSTS", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
 }));
 
