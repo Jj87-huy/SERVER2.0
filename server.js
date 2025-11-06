@@ -3,6 +3,7 @@ const https = require("https");
 const vm = require("vm");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const bcrypt = require("bcryptjs");
 
 const app = express();
 app.use(express.json());
