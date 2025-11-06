@@ -5,19 +5,32 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 async function detectDomain(text) {
   try {
-    const prompt = `Câu "${text}" thuộc lĩnh vực nào?
-Chỉ trả về một trong hai từ:
-- "IT" nếu liên quan đến công nghệ thông tin, máy tính, sửa chữa máy tính, phần mềm, phần cứng...
-- "OTHER" nếu không.`;
+    const prompt = `
+Phân loại lĩnh vực của câu sau: "${text}"
+
+Chỉ trả về DUY NHẤT một trong hai từ:
+- IT
+- OTHER
+
+Quy tắc:
+- Trả về IT nếu câu liên quan đến máy tính, phần cứng, phần mềm, lỗi máy, sửa PC, mạng, công nghệ, thiết bị điện tử, game lỗi, hệ điều hành, IT support.
+- Hiểu cả từ lóng, sai chính tả, viết tắt, ngôn ngữ Gen Z (vd: pc lag vl, win lỗi, ko boot, máy đơ, game crash).
+- Tuyệt đối không trả về thêm bất kỳ ký tự nào khác.
+- Không giải thích.
+    `;
 
     const result = await model.generateContent(prompt);
-    const output = (await result.response.text()).trim().toUpperCase();
+    let output = (await result.response.text()).trim().toUpperCase();
 
-    // 🔍 Chuẩn hóa kết quả
-    if (output.includes("IT")) return "IT";
+    // ✅ Loại bỏ toàn bộ ký tự không phải chữ cái để tránh lỗi output
+    // (ví dụ: "IT.", "IT ✅", "IT domain", "=> IT")
+    output = output.replace(/[^A-Z]/g, "").trim();
+
+    // ✅ Chuẩn hóa mạnh
+    if (output === "IT") return "IT";
     return "OTHER";
   } catch (err) {
-    console.error("[detectDomain ERR]", err);
+    console.error("[detectDomain ERR]", err.message);
     return "OTHER";
   }
 }
