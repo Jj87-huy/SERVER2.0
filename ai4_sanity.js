@@ -5,27 +5,47 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 async function checkSanity(text) {
   try {
-    const prompt = `Đánh giá xem câu "${text}" có vô nghĩa, troll hoặc không phù hợp không.
-Trả về JSON đúng định dạng sau:
-{"success": true/false, "reply": "phản hồi ngắn gọn bằng tiếng Việt"}`;
+    const prompt = `
+Hãy đánh giá câu sau: "${text}"
+
+Mục tiêu:
+- success = true nếu câu vô nghĩa, troll, nhảm, không phù hợp, spam hoặc thật sự không thể hiểu.
+- success = false nếu câu hợp lệ, có ý nghĩa hoặc là câu hỏi bình thường.
+- reply = phản hồi ngắn gọn bằng tiếng Việt (1 câu).
+
+Chỉ trả về JSON **đúng cấu trúc sau, không thêm ký tự thừa**:
+{"success": true/false, "reply": "text"}
+    `;
 
     const result = await model.generateContent(prompt);
-    const output = await result.response.text();
+    let output = (await result.response.text()).trim();
 
-    // Thử parse JSON
+    // ✅ Clean các ký tự có thể gây lỗi JSON (vd: ```json)
+    output = output.replace(/```json|```/gi, "").trim();
+
+    // ✅ Tránh AI trả lời thừa text ngoài JSON → chỉ lấy JSON đầu tiên
+    const jsonMatch = output.match(/\{[\s\S]*\}/);
+    if (jsonMatch) output = jsonMatch[0];
+
+    // ✅ Parse JSON an toàn
     try {
       const parsed = JSON.parse(output);
+
       return {
-        isStupid: !!parsed.isStupid,
+        success: typeof parsed.success === "boolean" ? parsed.success : true,
         reply: parsed.reply || "",
       };
-    } catch {
-      // Nếu model trả về text không chuẩn JSON
-      return { isStupid: false, reply: output.trim() };
+    } catch (e) {
+      console.warn("[checkSanity] JSON parse failed:", output);
+      return {
+        success: true,
+        reply: output,
+      };
     }
+
   } catch (err) {
-    console.error("[checkSanity ERR]", err);
-    return { isStupid: false, reply: "" };
+    console.error("[checkSanity ERR]", err.message);
+    return { success: true, reply: "" };
   }
 }
 
