@@ -341,31 +341,28 @@ app.post("/auth/register", async (req, res) => {
   }
 });
 // ===========================
-// ✅ Đăng ký tài khoản
+// ✅ Đăng nhap tài khoản
 // ===========================
 app.post("/auth/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
+  const { email, password } = req.body;
 
-    const user = await User.findOne({ username });
-    if (!user) return res.status(400).json({ error: "Sai username hoặc mật khẩu" });
+  if (!email || !password) 
+    return res.status(400).json({ error: "Thiếu email hoặc password" });
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ error: "Sai username hoặc mật khẩu" });
+  const user = await User.findOne({ "email.mail": email });
+  if (!user) return res.status(400).json({ error: "Email không tồn tại" });
 
-    res.json({
-      message: "✅ Đăng nhập thành công!",
-      user: {
-        username: user.username,
-        role: user.role,
-        limit: user.request_limit
-      }
-    });
+  const valid = await bcrypt.compare(password, user.password);
+  if (!valid) return res.status(400).json({ error: "Sai mật khẩu" });
 
-  } catch (err) {
-    console.error("❌ Login error:", err);
-    res.status(500).json({ error: "Lỗi server login" });
-  }
+  res.json({
+    message: "✅ Đăng nhập thành công!",
+    user: {
+      username: user.username,
+      email: user.email.mail,
+      role: user.role
+    }
+  });
 });
 
 // ===========================
