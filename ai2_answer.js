@@ -1,32 +1,60 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// 🔑 Dùng key từ biến môi trường hoặc fallback
 const genAI = new GoogleGenerativeAI("AIzaSyAbcO9qrxxI-43NPT2GwXgz5u1Yai2PQuA");
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-async function generateAnswer(text) {
+// ✅ Cache đơn giản
+const cache = new Map();
+const MAX_CACHE = 100;
+
+async function generateAnswer(text, tone = "lich-su") {
   try {
+    // ✅ 1. Cache
+    const cacheKey = `${text}|${tone}`;
+    if (cache.has(cacheKey)) return cache.get(cacheKey);
+
+    // ✅ 2. Prompt duy nhất — AI tự nhận diện hết
     const prompt = `
-Trả lời cho câu hỏi: "${text}".
-Yêu cầu:
-- Viết câu trả lời bằng tiếng Việt, tự nhiên, ngắn gọn(1-2 câu), dễ hiểu.
-- Không dùng danh sách, bullet, markdown hoặc ký hiệu như *, **, -, •.
+Bạn là trợ lý AI tiếng Việt.
+Hãy trả lời câu hỏi: "${text}"
+
+Yêu cầu rất quan trọng:
+- Trả lời bằng tiếng Việt, 1–2 câu, tự nhiên, dễ hiểu.
+- Tuyệt đối không dùng bullet, không markdown, không ký hiệu như *, -, •.
+- Không xuống dòng, chỉ trả lời một đoạn văn.
+- Nếu câu hỏi chứa nội dung nhạy cảm, độc hại, 18+, xúc phạm, hãy từ chối lịch sự.
+- Tự động hiểu và xử lý từ lóng, viết tắt, ngôn ngữ Gen Z.
+- Tự chọn giọng:
+    + Nếu tone = "vui": giọng thân thiện, tươi vui, nhẹ nhàng.
+    + Nếu tone = "lich-su": giọng lịch sự, nhã nhặn.
+Trả về đúng câu trả lời, không giải thích quy tắc.
     `;
 
     const result = await model.generateContent(prompt);
     let answer = (await result.response.text()).trim();
 
-    // 🧹 Làm sạch định dạng
+    // ✅ Làm sạch đơn giản
     answer = answer
       .replace(/\*\*/g, "")
-      .replace(/^\s*[-*•]+\s*/gm, "")
-      .replace(/\n{2,}/g, " ")
-      .replace(/\s+/g, " ")
+      .replace(/[*•\-]+/g, "")
+      .replace(/\n+/g, " ")
+      .replace(/\s{2,}/g, " ")
       .trim();
 
-    return answer || "Xin lỗi, hiện tại tôi không có câu trả lời phù hợp.";
+    if (!answer) {
+      answer = "Xin lỗi, tôi chưa có câu trả lời phù hợp.";
+    }
+
+    // ✅ Lưu cache
+    if (cache.size >= MAX_CACHE) {
+      const firstKey = cache.keys().next().value;
+      cache.delete(firstKey);
+    }
+    cache.set(cacheKey, answer);
+
+    return answer;
   } catch (err) {
-    console.error("[generateAnswer ERR]", err);
+    console.error("[generateAnswer ERR]", err.message);
     return "Xin lỗi, hiện tại tôi không trả lời được.";
   }
 }
