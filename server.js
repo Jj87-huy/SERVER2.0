@@ -21,10 +21,19 @@ app.options("*", cors());
 // ===========================
 // ⚙️ MongoDB Setup
 // ===========================
+// // ⚙️ CHAT DB
 const DATA = "mongodb+srv://admin:RBbFpKyGrn5vd3@miniplaydata.s3wquxr.mongodb.net/?appName=MiniplayData";
 mongoose.connect(DATA)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB error:", err));
+// ⚙️ USER DB
+const USER_DB = "mongodb+srv://admin:PASS@YOURUSERDB.mongodb.net/UserDB";
+
+const userConnection = mongoose.createConnection(USER_DB);
+
+userConnection.on("connected", () => console.log("✅ UserDB connected"));
+userConnection.on("error", (err) => console.error("❌ UserDB error:", err));
+
 
 // ✅ Cập nhật Schema có thêm trường `link`
 const ChatSchema = new mongoose.Schema({
@@ -35,6 +44,21 @@ const ChatSchema = new mongoose.Schema({
   time: { type: Date, default: Date.now }
 });
 const ChatData = mongoose.model("ChatData", ChatSchema);
+
+// User Schema dùng database UserDB
+const UserSchema = new mongoose.Schema({
+  username: { type: String, unique: true },
+  password: String,
+  name: String,
+  avatar: { type: String, default: "" },
+  email: { mail: String, verification: { type: Boolean, default: false } },
+  phone: { number: String, verification: { type: Boolean, default: false } },
+  linked_account: { google: String, facebook: String, github: String },
+  role: { guest: { type: Boolean, default: false }, basic: { type: Boolean, default: true }, premium: { type: Boolean, default: false } },
+  request_limit: { used: { type: Number, default: 0 }, max: { type: Number, default: 150 } },
+  created_at: { type: Date, default: Date.now }
+});
+const User = userConnection.model("User", UserSchema);// ✅ Model nằm trên database UserDB (userConnection)
 
 // ===========================
 // 🧩 Load module từ GitHub raw
@@ -262,6 +286,61 @@ app.post("/guest", (req, res) => {
     remaining: 20 - guest.used,
     message: "✅ OK"
   });
+});
+
+// ===========================
+// ✅ Đăng ký tài khoản
+// ===========================
+app.post("/auth/register", async (req, res) => {
+  try {
+    const { username, password, email, name } = req.body;
+
+    // ✅ Kiểm tra thiếu thông tin
+    if (!username || !password || !email) {
+      return res.status(400).json({ error: "Thiếu username, password hoặc email" });
+    }
+
+    // ✅ Kiểm tra username tồn tại
+    const checkUsername = await User.findOne({ username });
+    if (checkUsername) {
+      return res.status(400).json({ error: "Tên đăng nhập đã tồn tại" });
+    }
+
+    // ✅ Kiểm tra email tồn tại
+    const checkEmail = await User.findOne({ "email.mail": email });
+    if (checkEmail) {
+      return res.status(400).json({ error: "Email đã được sử dụng" });
+    }
+
+    // ✅ Mã hóa mật khẩu
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // ✅ Tạo user mới
+    const newUser = new User({
+      username,
+      password: hashedPassword,
+      name: name || username,
+      email: { mail: email, verification: false },
+      role: { basic: true, premium: false },
+      request_limit: 150 // mặc định cho basic
+    });
+
+    await newUser.save();
+
+    res.json({
+      message: "✅ Đăng ký thành công!",
+      user: {
+        username: newUser.username,
+        email: newUser.email.mail,
+        role: newUser.role,
+        request_limit: newUser.request_limit
+      }
+    });
+
+  } catch (err) {
+    console.error("❌ Register error:", err);
+    res.status(500).json({ error: "Lỗi server khi đăng ký" });
+  }
 });
 
 // ===========================
