@@ -27,10 +27,8 @@ mongoose.connect(DATA)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB error:", err));
 // ⚙️ USER DB
-const USER_DB = "mongodb+srv://admin:PASS@YOURUSERDB.mongodb.net/UserDB";
-
+const USER_DB = "mongodb+srv://admin:LFNXJ2rDCrM07MLw@cluster0.jjgpbp9.mongodb.net/?appName=Cluster0";
 const userConnection = mongoose.createConnection(USER_DB);
-
 userConnection.on("connected", () => console.log("✅ UserDB connected"));
 userConnection.on("error", (err) => console.error("❌ UserDB error:", err));
 
@@ -340,6 +338,33 @@ app.post("/auth/register", async (req, res) => {
   } catch (err) {
     console.error("❌ Register error:", err);
     res.status(500).json({ error: "Lỗi server khi đăng ký" });
+  }
+});
+// ===========================
+// ✅ Đăng ký tài khoản
+// ===========================
+app.post("/auth/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const user = await User.findOne({ username });
+    if (!user) return res.status(400).json({ error: "Sai username hoặc mật khẩu" });
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(400).json({ error: "Sai username hoặc mật khẩu" });
+
+    res.json({
+      message: "✅ Đăng nhập thành công!",
+      user: {
+        username: user.username,
+        role: user.role,
+        limit: user.request_limit
+      }
+    });
+
+  } catch (err) {
+    console.error("❌ Login error:", err);
+    res.status(500).json({ error: "Lỗi server login" });
   }
 });
 
