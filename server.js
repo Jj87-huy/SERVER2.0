@@ -212,6 +212,56 @@ app.delete("/data/:id", async (req, res) => {
     res.status(500).json({ error: "Không thể xóa dữ liệu" });
   }
 });
+// ===========================
+// 👤 Guest API – giới hạn 20 lần request
+// ===========================
+const guestLimits = {}; 
+// Cấu trúc lưu:
+// guestLimits[id] = { used: 0, lastActive: Date.now() }
+app.post("/guest", (req, res) => {
+  let guestId = req.body.guestId;
+
+  // Nếu chưa có guestId => tạo mới
+  if (!guestId) {
+    guestId = "guest_" + Math.random().toString(36).substring(2, 10);
+    guestLimits[guestId] = { used: 0, lastActive: Date.now() };
+
+    return res.json({
+      guestId,
+      used: 0,
+      limit: 20,
+      remaining: 20,
+      message: "✅ Tạo phiên khách mới!"
+    });
+  }
+
+  // Nếu đã có → cập nhật
+  if (!guestLimits[guestId]) {
+    guestLimits[guestId] = { used: 0, lastActive: Date.now() };
+  }
+  const guest = guestLimits[guestId];
+  guest.lastActive = Date.now();
+
+  if (guest.used >= 20) {
+    return res.json({
+      guestId,
+      used: guest.used,
+      limit: 20,
+      remaining: 0,
+      blocked: true,
+      message: "⛔ Bạn đã hết lượt dùng (20/20). Vui lòng đăng ký tài khoản!"
+    });
+  }
+
+  guest.used++;
+  res.json({
+    guestId,
+    used: guest.used,
+    limit: 20,
+    remaining: 20 - guest.used,
+    message: "✅ OK"
+  });
+});
 
 // ===========================
 // 🚀 Start Server
