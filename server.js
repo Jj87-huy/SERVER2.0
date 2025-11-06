@@ -27,7 +27,7 @@ mongoose.connect(DATA)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB error:", err));
 // ⚙️ USER DB
-const USER_DB = "mongodb+srv://admin:LFNXJ2rDCrM07MLw@cluster0.jjgpbp9.mongodb.net/?appName=Cluster0";
+const USER_DB = "mongodb+srv://admin:ucqYLGqaqMLnpZxV@cluster0.pwvcjhp.mongodb.net/?appName=Cluster0";
 const userConnection = mongoose.createConnection(USER_DB);
 userConnection.on("connected", () => console.log("✅ UserDB connected"));
 userConnection.on("error", (err) => console.error("❌ UserDB error:", err));
