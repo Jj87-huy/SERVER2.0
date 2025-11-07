@@ -4,6 +4,7 @@ const vm = require("vm");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(express.json());
