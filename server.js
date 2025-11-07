@@ -109,7 +109,7 @@ let ai1, ai2, ai3, ai4;
     console.log("[GITHUB]✅ AI2 loaded");
   } catch (e) {
     console.warn("[GITHUB]⚠️ Fallback AI2:", e.message);
-    ai2 = { generateAnswer: async t => "Fallback answer." };
+    ai2 = { generateAnswer: async (msg) => `🤖 Tôi đang bảo trì, vui lòng thử lại sau vài phút.\n\n(Có thể đã vượt hạn mức API Gemini)` };
   }
 
   try {
