@@ -432,6 +432,38 @@ app.post('/auth/logout', async (req, res) => {
   }
 });
 
+// ===========================
+// ✅ API cập nhật hồ sơ người dùng
+// ===========================
+app.put("/auth/profile", authMiddleware, async (req, res) => {
+  try {
+    const uid = req.user.id;
+    const { name, email, phone, password, avatar } = req.body;
+
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData["email.mail"] = email;
+    if (phone) updateData["phone.number"] = phone;
+    if (avatar) updateData.avatar = avatar;
+
+    // Nếu cập nhật mật khẩu
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    const updated = await User.findByIdAndUpdate(uid, updateData, { new: true });
+
+    res.json({
+      message: "✅ Cập nhật hồ sơ thành công!",
+      user: updated
+    });
+
+  } catch (err) {
+    console.error("❌ Update profile error:", err);
+    res.status(500).json({ error: "Lỗi khi cập nhật hồ sơ" });
+  }
+});
+
 // Protected example
 app.get('/auth/me', authenticateToken, async (req, res) => {
   try {
