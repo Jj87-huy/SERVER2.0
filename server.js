@@ -20,31 +20,43 @@ app.use(cors({
 app.options("*", cors());
 
 // ===========================
+// 🔐 JWT CONFIG
+// ===========================
+const JWT_ACCESS_SECRET = "ACCESS_SECRET_KEY_123";
+const JWT_REFRESH_SECRET = "REFRESH_SECRET_KEY_456";
+const ACCESS_EXPIRES = "59m";    // Access token sống 59 phút
+const REFRESH_EXPIRES = "31d";    // Refresh token sống 31 ngày
+
+// ===========================
 // ⚙️ MongoDB Setup
 // ===========================
-// // ⚙️ CHAT DB
+// 🧠 CHAT DB
 const DATA = "mongodb+srv://admin:RBbFpKyGrn5vd3@miniplaydata.s3wquxr.mongodb.net/?appName=MiniplayData";
 mongoose.connect(DATA)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB error:", err));
-// ⚙️ USER DB
+  .then(() => console.log("✅ ChatDB connected"))
+  .catch(err => console.error("❌ ChatDB error:", err));
+
+// 👤 USER DB
 const USER_DB = "mongodb+srv://admin:ucqYLGqaqMLnpZxV@cluster0.pwvcjhp.mongodb.net/?appName=Cluster0";
 const userConnection = mongoose.createConnection(USER_DB);
 userConnection.on("connected", () => console.log("✅ UserDB connected"));
 userConnection.on("error", (err) => console.error("❌ UserDB error:", err));
 
-
-// ✅ Cập nhật Schema có thêm trường `link`
+// ===========================
+// 🧩 Chat Schema
+// ===========================
 const ChatSchema = new mongoose.Schema({
   keyword: { type: String, required: true },
   answer: { type: String, required: true },
-  link: { type: String, default: "" }, // 🔗 thêm trường link
+  link: { type: String, default: "" },
   source: { type: String, default: "manual" },
   time: { type: Date, default: Date.now }
 });
 const ChatData = mongoose.model("ChatData", ChatSchema);
 
-// User Schema dùng database UserDB
+// ===========================
+// 👤 User Schema
+// ===========================
 const UserSchema = new mongoose.Schema({
   username: { type: String, unique: true, index: true },
   email: { type: String, unique: true, index: true },
@@ -52,53 +64,43 @@ const UserSchema = new mongoose.Schema({
   name: String,
   avatar: String,
   phone: { number: String, verification: { type: Boolean, default: false } },
-  linked_account: { google: String, facebook: String, discord: String }, // sample
+  linked_account: { google: String, facebook: String, discord: String },
   role: { basic: { type: Boolean, default: true }, premium: { type: Boolean, default: false } },
-  request_limit: { type: Number, default: 150 }, // basic default
+  request_limit: { type: Number, default: 150 },
   refreshTokens: [{ token: String, createdAt: Date }],
   createdAt: { type: Date, default: Date.now }
 });
-const User = mongoose.model('User', UserSchema); // ✅ Model nằm trên database UserDB (userConnection)
+const User = userConnection.model("User", UserSchema);
 
-// ====== Helpers ======
+// ===========================
+// 🔐 JWT Helpers
+// ===========================
 function generateAccessToken(user) {
-  // Keep payload small
   const payload = { sub: user._id.toString(), username: user.username, role: user.role };
   return jwt.sign(payload, JWT_ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES });
 }
+
 function generateRefreshToken(user) {
   const payload = { sub: user._id.toString() };
   return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES });
 }
 
-// Middleware to protect routes
-async function authenticateToken(req, res, next) {
-  const auth = req.headers['authorization'];
-  if (!auth) return res.status(401).json({ error: 'No token' });
-  const parts = auth.split(' ');
-  if (parts.length !== 2 || parts[0] !== 'Bearer') return res.status(401).json({ error: 'Invalid auth format' });
+// ===========================
+// 🧠 Middleware xác thực
+// ===========================
+function authenticateToken(req, res, next) {
+  const auth = req.headers["authorization"];
+  if (!auth) return res.status(401).json({ error: "No token" });
 
-  const token = parts[1];
+  const [type, token] = auth.split(" ");
+  if (type !== "Bearer" || !token) return res.status(401).json({ error: "Invalid auth format" });
+
   try {
     const payload = jwt.verify(token, JWT_ACCESS_SECRET);
-    // attach user minimal info
     req.user = { id: payload.sub, username: payload.username, role: payload.role };
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Token invalid or expired' });
-  }
-}
-
-function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: "No token" });
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, "SECRET_KEY");
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: "Invalid token" });
+    return res.status(401).json({ error: "Token invalid or expired" });
   }
 }
 
@@ -331,13 +333,15 @@ app.post("/guest", (req, res) => {
 });
 
 // Register
-app.post('/auth/register', async (req, res) => {
+app.post("/auth/register", async (req, res) => {
   try {
     const { username, password, email, name } = req.body;
-    if (!username || !password || !email) return res.status(400).json({ error: 'username/password/email required' });
+    if (!username || !password || !email)
+      return res.status(400).json({ error: "username, password, email required" });
 
     const existing = await User.findOne({ $or: [{ username }, { email }] });
-    if (existing) return res.status(400).json({ error: 'username or email already used' });
+    if (existing)
+      return res.status(400).json({ error: "Username or email already used" });
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
@@ -347,85 +351,82 @@ app.post('/auth/register', async (req, res) => {
       email,
       passwordHash,
       name: name || username,
-      avatar: '',
+      avatar: "",
       request_limit: 150,
       role: { basic: true, premium: false }
     });
-    await user.save();
 
-    return res.json({
-      message: 'Registered',
+    await user.save();
+    res.json({
+      message: "✅ Registered successfully",
       user: { id: user._id, username: user.username, email: user.email, role: user.role }
     });
   } catch (err) {
-    console.error('Register error', err);
-    return res.status(500).json({ error: 'Server error' });
+    console.error("Register error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 // Login
-app.post('/auth/login', async (req, res) => {
+app.post("/auth/login", async (req, res) => {
   try {
     const { usernameOrEmail, password } = req.body;
-    if (!usernameOrEmail || !password) return res.status(400).json({ error: 'username/email and password required' });
+    if (!usernameOrEmail || !password)
+      return res.status(400).json({ error: "username/email and password required" });
 
     const user = await User.findOne({ $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }] });
-    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+    if (!user) return res.status(400).json({ error: "Invalid credentials" });
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) return res.status(400).json({ error: "Invalid credentials" });
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-
-    // Store refresh token (simple approach)
     user.refreshTokens.push({ token: refreshToken, createdAt: new Date() });
-    // optionally prune old tokens here
     await user.save();
 
     res.json({
+      message: "✅ Login success",
       accessToken,
       refreshToken,
       user: { id: user._id, username: user.username, email: user.email, role: user.role, request_limit: user.request_limit }
     });
   } catch (err) {
-    console.error('Login error', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// Refresh
-app.post('/auth/refresh', async (req, res) => {
+// Refresh Token
+app.post("/auth/refresh", async (req, res) => {
   try {
     const { refreshToken } = req.body;
-    if (!refreshToken) return res.status(400).json({ error: 'refreshToken required' });
+    if (!refreshToken)
+      return res.status(400).json({ error: "refreshToken required" });
 
     let payload;
     try {
       payload = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
     } catch (err) {
-      return res.status(401).json({ error: 'Invalid refresh token' });
+      return res.status(401).json({ error: "Invalid refresh token" });
     }
 
-    const userId = payload.sub;
-    const user = await User.findById(userId);
-    if (!user) return res.status(401).json({ error: 'User not found' });
+    const user = await User.findById(payload.sub);
+    if (!user) return res.status(401).json({ error: "User not found" });
 
-    // Check stored
     const stored = user.refreshTokens.find(r => r.token === refreshToken);
-    if (!stored) return res.status(401).json({ error: 'Refresh token revoked' });
+    if (!stored) return res.status(401).json({ error: "Refresh token revoked" });
 
-    // Optionally: rotate (issue new refresh token)
     const newAccess = generateAccessToken(user);
-    return res.json({ accessToken: newAccess });
+    res.json({ accessToken: newAccess });
   } catch (err) {
-    console.error('Refresh error', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Refresh error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// Logout (revoke refresh token)
-app.post('/auth/logout', async (req, res) => {
+// Logout
+app.post("/auth/logout", async (req, res) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken) return res.json({ ok: true });
@@ -438,54 +439,41 @@ app.post('/auth/logout', async (req, res) => {
 
     user.refreshTokens = user.refreshTokens.filter(r => r.token !== refreshToken);
     await user.save();
-    return res.json({ ok: true });
+    res.json({ ok: true });
   } catch (err) {
-    console.error('Logout err', err);
-    return res.status(500).json({ error: 'Server error' });
+    console.error("Logout error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// ===========================
-// ✅ API cập nhật hồ sơ người dùng
-// ===========================
-app.put("/auth/profile", authMiddleware, async (req, res) => {
+// Update Profile
+app.put("/auth/profile", authenticateToken, async (req, res) => {
   try {
-    const uid = req.user.id;
     const { name, email, phone, password, avatar } = req.body;
-
     const updateData = {};
     if (name) updateData.name = name;
-    if (email) updateData["email.mail"] = email;
+    if (email) updateData.email = email;
     if (phone) updateData["phone.number"] = phone;
     if (avatar) updateData.avatar = avatar;
+    if (password) updateData.passwordHash = await bcrypt.hash(password, 10);
 
-    // Nếu cập nhật mật khẩu
-    if (password) {
-      updateData.password = await bcrypt.hash(password, 10);
-    }
-
-    const updated = await User.findByIdAndUpdate(uid, updateData, { new: true });
-
-    res.json({
-      message: "✅ Cập nhật hồ sơ thành công!",
-      user: updated
-    });
-
+    const updated = await User.findByIdAndUpdate(req.user.id, updateData, { new: true });
+    res.json({ message: "✅ Profile updated", user: updated });
   } catch (err) {
-    console.error("❌ Update profile error:", err);
-    res.status(500).json({ error: "Lỗi khi cập nhật hồ sơ" });
+    console.error("Profile error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// Protected example
-app.get('/auth/me', authenticateToken, async (req, res) => {
+// Get current user info
+app.get("/auth/me", authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-passwordHash -refreshTokens');
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    const user = await User.findById(req.user.id).select("-passwordHash -refreshTokens");
+    if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ user });
   } catch (err) {
-    console.error('me err', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Me error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
