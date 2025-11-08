@@ -145,7 +145,7 @@ async function saveLearned(entry) {
 }
 
 // ===========================
-// 💬 API /chat
+// 💬 API /chat (phiên bản gốc chuẩn hóa)
 // ===========================
 app.post("/chat", async (req, res) => {
   const msg = req.body.message?.trim();
@@ -158,7 +158,7 @@ app.post("/chat", async (req, res) => {
       ai3.detectDomain(msg),
       ai2.generateAnswer(msg)
     ]);
-    
+
     if (sanity.isStupid) {
       return res.json({ reply: sanity.reply });
     }
@@ -173,15 +173,19 @@ app.post("/chat", async (req, res) => {
 
     if (domain === "IT") {
       await saveLearned({ keyword: keywords, answer });
-      send.log(`💾 Lưu vào MongoDB: ${keywords}`);
+      console.log(`💾 Lưu vào MongoDB: ${keywords}`);
     }
-send.log(` [Analyze] ${keywords} \n [Answer] ${answer} \n [Domain] ${domain} \n [sanity] ${sanity} `);
+
+    // 🧠 Log thông tin chat
+    console.log(`\n=== CHAT LOG ===\n[Message]: ${msg}\n[Analyze]: ${keywords}\n[Domain]: ${domain}\n[Sanity]: ${sanity}\n[Answer]: ${answer}\n=================\n`);
+
     res.json({ reply: answer });
   } catch (err) {
     console.error("[SERVER ERR]", err);
     res.status(500).json({ reply: "⚠️ Server lỗi, chờ tý nha." });
   }
 });
+
 
 // ===========================
 // 🧾 API quản lý dữ liệu MongoDB
