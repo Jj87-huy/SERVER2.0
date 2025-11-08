@@ -1,26 +1,8 @@
 // analyze-text.js
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const axios = require("axios");
 
 const genAI = new GoogleGenerativeAI("AIzaSyCI4_KgdyJL-zMW3lGCNwFJ3BIHisD0s0g");
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-// ===========================
-// 🌐 LOG Setup
-// ===========================
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1435671927791550517/ZxQfJkwi0_mEuIqxeM_HGB8E-uw57RXTcsSHQxQRZBfSezlNJcrl6cZ-jZ9PmjEhlCzm?wait=true";
-const username = "Takanashi Rikka";
-function getTime() { return new Date().toLocaleTimeString("vi-VN", { hour12: false }); }
-function colorize(type, msg) { const colors = { INFO: 32, WARN: 33, ERROR: 31 }; const code = colors[type] || 37; return `\x1b[${code}m[${getTime()}] [${type}]\x1b ${msg}`; }
-async function sendMessage(payload) { const res = await axios.post(WEBHOOK_URL, payload); if (!res.data?.id) throw new Error("Không nhận được message ID từ Discord."); return res.data.id; }// ========== Discord helpers ==========
-async function editMessage(id, payload) { await axios.patch(`${WEBHOOK_URL.replace("?wait=true", "")}/messages/${id}`, payload); }
-// ========== SEND TEXT (code block mode) ==========
-async function send(content) {
-  try { const logLine = `[${getTime()}] ${content}`; textHistory.push(logLine); const formatted = "```log\n" + textHistory.join("\n") + "\n```"; if (!textMessageId || textEditCount >= 20) { textMessageId = await sendMessage({ content: formatted, username }); textEditCount = 0; textHistory = []; } else { await editMessage(textMessageId, { content: formatted, username }); textEditCount++; } } 
-  catch (err) { console.error( colorize("ERROR", `Lỗi gửi text: ${err.response?.status || "?"} | ${err.response?.data?.message || err.message}`)); }}
-// ========== Shortcut methods ==========
-send.log = async msg => { console.log(colorize("INFO", msg)); await send(`[INFO] ${msg}`); };
-send.warn = async msg => { console.warn(colorize("WARN", msg)); await send(`[WARN] ${msg}`); };
-send.error = async msg => { console.error(colorize("ERROR", msg)); await send(`[ERROR] ${msg}`); };
 
 // 🔁 Danh sách đồng nghĩa mở rộng
 const dup = {
@@ -196,9 +178,9 @@ async function analyzeText(text) {
 
     return keywords || "unknown";
   } catch (err) {
-    send.error("[AI1/analyzeText]❌", err.message);
+    console.error("[AI1/analyzeText]❌", err.message);
     return "phân tích lỗi";
   }
 }
-send.log(`[analyzeTex] Keywork: ${keywords}`);
+
 module.exports = { analyzeText };
