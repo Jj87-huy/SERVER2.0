@@ -1,6 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI("AIzaSyAbcO9qrxxI-43NPT2GwXgz5u1Yai2PQuA");
+const genAI = new GoogleGenerativeAI("AIzaSyAVuDhgqspq0OuIe9Epc4THGup9E_j84ck");
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 // ✅ Cache đơn giản
