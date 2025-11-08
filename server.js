@@ -16,14 +16,24 @@ const app = express();
 app.use(express.json());
 
 // ===========================
-// 🌐 CORS Setup
+// 🌐 CORS Setup — FIX cho Render
 // ===========================
-app.use(cors({
-  origin: ["*"],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
-app.options("*", cors());
+const allowedOrigins = [ "https://kbot-ai.name.vn" ];
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200); // Xử lý preflight request
+  }
+  next();
+});
+
 
 
 // ===========================
