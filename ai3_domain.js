@@ -1,7 +1,7 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI("AIzaSyA4utCzVBb3cejvsg1_HeHBVLPjw6ZkoU8");
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const genAI = new GoogleGenerativeAI(process.env.AI3);
+const model = genAI.getGenerativeModel({ model: process.env.MODELS });
 
 async function detectDomain(text) {
   try {
