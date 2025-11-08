@@ -183,15 +183,15 @@ app.post("/chat", async (req, res) => {
 
     if (domain === "IT") {
       await saveLearned({ keyword: keywords, answer });
-      console.log(`💾 Lưu vào MongoDB: ${keywords}`);
+      send.log(`💾 Lưu vào MongoDB: ${keywords}`);
     }
 
     // 🧠 Log thông tin chat
-    console.log(`\n=== CHAT LOG ===\n[Message]: ${msg}\n[Analyze]: ${keywords}\n[Domain]: ${domain}\n[Sanity]: ${sanity}\n[Answer]: ${answer}\n=================\n`);
+    send.log(`\n=== CHAT LOG ===\n[Message]: ${msg}\n[Analyze]: ${keywords}\n[Domain]: ${domain}\n[Sanity]: ${sanity}\n[Answer]: ${answer}\n=================\n`);
 
     res.json({ reply: answer });
   } catch (err) {
-    console.error("[SERVER ERR]", err);
+    send.error("[SERVER ERR]", err);
     res.status(500).json({ reply: "⚠️ Server lỗi, chờ tý nha." });
   }
 });
