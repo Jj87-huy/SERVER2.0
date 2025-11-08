@@ -1,8 +1,8 @@
 // analyze-text.js
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI("AIzaSyCI4_KgdyJL-zMW3lGCNwFJ3BIHisD0s0g");
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const genAI = new GoogleGenerativeAI(process.env.AI1);
+const model = genAI.getGenerativeModel({ model: process.env.MODELS });
 
 // 🔁 Danh sách đồng nghĩa mở rộng
 const dup = {
