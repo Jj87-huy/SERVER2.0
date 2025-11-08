@@ -168,7 +168,8 @@ app.post("/chat", async (req, res) => {
       ai3.detectDomain(msg),
       ai2.generateAnswer(msg)
     ]);
-
+    // 🧠 Log thông tin chat
+    send.log(`\n=== CHAT LOG ===\n[Message]: ${msg}\n[Analyze]: ${keywords}\n[Domain]: ${domain}\n[Sanity]: ${sanity}\n[Answer]: ${answer}\n=================\n`);
     if (sanity.isStupid) {
       return res.json({ reply: sanity.reply });
     }
@@ -185,9 +186,6 @@ app.post("/chat", async (req, res) => {
       await saveLearned({ keyword: keywords, answer });
       send.log(`💾 Lưu vào MongoDB: ${keywords}`);
     }
-
-    // 🧠 Log thông tin chat
-    send.log(`\n=== CHAT LOG ===\n[Message]: ${msg}\n[Analyze]: ${keywords}\n[Domain]: ${domain}\n[Sanity]: ${sanity}\n[Answer]: ${answer}\n=================\n`);
 
     res.json({ reply: answer });
   } catch (err) {
