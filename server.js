@@ -19,7 +19,7 @@ app.use(express.json());
 // 🌐 CORS Setup
 // ===========================
 app.use(cors({
-  origin: ["https://kbot-ai.name.vn", "http://localhost:3000"],
+  origin: ["*"],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
