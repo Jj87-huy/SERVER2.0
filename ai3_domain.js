@@ -53,5 +53,5 @@ Quy tắc:
   }
 }
 
-send.log(`[Domain] Domain: ${output}`)
+send.log(`[Domain] Domain: ${output}`);
 module.exports = { detectDomain };
