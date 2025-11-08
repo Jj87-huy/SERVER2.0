@@ -111,7 +111,7 @@ let ai1, ai2, ai3, ai4;
 (async () => {
   try {
     ai1 = await loadRemoteModule(MODULE_URLS.ai1);
-    send.log("[GITHUB]✅ AI1 loaded");
+    console.log("[GITHUB]✅ AI1 loaded");
   } catch (e) {
     send.warn("[GITHUB]⚠️ Fallback AI1:", e.message);
     ai1 = { analyzeText: async t => t };
@@ -119,7 +119,7 @@ let ai1, ai2, ai3, ai4;
 
   try {
     ai2 = await loadRemoteModule(MODULE_URLS.ai2);
-    send.log("[GITHUB]✅ AI2 loaded");
+    console.log("[GITHUB]✅ AI2 loaded");
   } catch (e) {
     send.warn("[GITHUB]⚠️ Fallback AI2:", e.message);
     ai2 = { generateAnswer: async (msg) => `🤖 Tôi đang bảo trì, vui lòng thử lại sau vài phút.\n\n(Có thể đã vượt hạn mức API Gemini)` };
@@ -127,7 +127,7 @@ let ai1, ai2, ai3, ai4;
 
   try {
     ai3 = await loadRemoteModule(MODULE_URLS.ai3);
-    send.log("[GITHUB]✅ AI3 loaded");
+    console.log("[GITHUB]✅ AI3 loaded");
   } catch (e) {
     send.warn("[GITHUB]⚠️ Fallback AI3:", e.message);
     ai3 = { detectDomain: async t => "OTHER" };
@@ -135,7 +135,7 @@ let ai1, ai2, ai3, ai4;
 
   try {
     ai4 = await loadRemoteModule(MODULE_URLS.ai4);
-    send.log("[GITHUB]✅ AI4 loaded");
+    console.log("[GITHUB]✅ AI4 loaded");
   } catch (e) {
     send.warn("[GITHUB]⚠️ Fallback AI4:", e.message);
     ai4 = { checkSanity: async t => ({ isStupid: false, reply: "" }) };
