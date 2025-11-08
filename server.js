@@ -173,12 +173,13 @@ app.post("/chat", async (req, res) => {
   if (!msg) return res.json({ reply: "Bạn chưa nhập gì nè 😅" });
 
   try {
-    const [keywords, sanity, domain] = await Promise.all([
+    const [keywords, sanity, domain, answer] = await Promise.all([
       ai1.analyzeText(msg),
       ai4.checkSanity(msg),
-      ai3.detectDomain(msg)
+      ai3.detectDomain(msg),
+      ai2.generateAnswer(msg)
     ]);
-
+    
     if (sanity.isStupid) {
       return res.json({ reply: sanity.reply });
     }
@@ -191,12 +192,11 @@ app.post("/chat", async (req, res) => {
       return res.json({ reply: found.answer, link: found.link || null });
     }
 
-    const answer = await ai2.generateAnswer(msg);
     if (domain === "IT") {
       await saveLearned({ keyword: keywords, answer });
       send.log(`💾 Lưu vào MongoDB: ${keywords}`);
     }
-
+send.log(` [Analyze] ${keywords} \n [Answer] ${answer} \n [Domain] ${domain} \n [sanity] ${sanity} `);
     res.json({ reply: answer });
   } catch (err) {
     console.error("[SERVER ERR]", err);
