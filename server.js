@@ -6,7 +6,7 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
 
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1435671927791550517/ZxQfJkwi0_mEuIqxeM_HGB8E-uw57RXTcsSHQxQRZBfSezlNJcrl6cZ-jZ9PmjEhlCzm?wait=true";
+const WEBHOOK_URL = process.env.WEBHOOK;
 const username = "Takanashi Rikka";
 let textMessageId = null;
 let textHistory = [];
@@ -46,16 +46,10 @@ send.error = async msg => { console.error(colorize("ERROR", msg)); await send(`[
 // ⚙️ MongoDB Setup
 // ===========================
 // // ⚙️ CHAT DB
-const DATA = "mongodb+srv://admin:RBbFpKyGrn5vd3@miniplaydata.s3wquxr.mongodb.net/?appName=MiniplayData";
+const DATA = process.env.DATACHAT;
 mongoose.connect(DATA)
   .then(() => send.log("✅ MongoDB connected"))
   .catch(err => send.error("❌ MongoDB error:", err));
-// ⚙️ USER DB
-const USER_DB = "mongodb+srv://admin:ucqYLGqaqMLnpZxV@cluster0.pwvcjhp.mongodb.net/?appName=Cluster0";
-const userConnection = mongoose.createConnection(USER_DB);
-userConnection.on("connected", () => send.log("✅ UserDB connected"));
-userConnection.on("error", (err) => send.error("❌ UserDB error:", err));
-
 
 // ✅ Cập nhật Schema có thêm trường `link`
 const ChatSchema = new mongoose.Schema({
@@ -66,21 +60,6 @@ const ChatSchema = new mongoose.Schema({
   time: { type: Date, default: Date.now }
 });
 const ChatData = mongoose.model("ChatData", ChatSchema);
-
-// User Schema dùng database UserDB
-const UserSchema = new mongoose.Schema({
-  username: { type: String, unique: true },
-  password: String,
-  name: String,
-  avatar: { type: String, default: "" },
-  email: { mail: String, verification: { type: Boolean, default: false } },
-  phone: { number: String, verification: { type: Boolean, default: false } },
-  linked_account: { google: String, facebook: String, github: String },
-  role: { guest: { type: Boolean, default: false }, basic: { type: Boolean, default: true }, premium: { type: Boolean, default: false } },
-  request_limit: { used: { type: Number, default: 0 }, max: { type: Number, default: 150 } },
-  created_at: { type: Date, default: Date.now }
-});
-const User = userConnection.model("User", UserSchema);// ✅ Model nằm trên database UserDB (userConnection)
 
 // ===========================
 // 🧩 Load module từ GitHub raw
