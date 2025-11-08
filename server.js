@@ -7,7 +7,7 @@ const bcrypt = require("bcryptjs");
 const axios = require("axios");
 
 const WEBHOOK_URL = process.env.WEBHOOK;
-const username = "Takanashi Rikka";
+const username = "Takanashi Rikka | LOG";
 let textMessageId = null;
 let textHistory = [];
 let textEditCount = 0;
