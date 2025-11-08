@@ -1,6 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI("AIzaSyCdDHI06dI8RgyLN2FG0wEpwe2qK6C1yHM");
+const genAI = new GoogleGenerativeAI("AIzaSyA4utCzVBb3cejvsg1_HeHBVLPjw6ZkoU8");
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 async function detectDomain(text) {
