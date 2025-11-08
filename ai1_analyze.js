@@ -4,152 +4,44 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.AI1);
 const model = genAI.getGenerativeModel({ model: process.env.MODELS });
 
-// 🔁 Danh sách đồng nghĩa mở rộng
-const dup = {
-  // ⚙️ CPU & quạt
-  "cooling fan": "cpu fan",
-  "cpu cooling fan": "cpu fan",
-  "fan cpu": "cpu fan",
-  "quạt tản nhiệt": "cpu fan",
-  "quạt cpu": "cpu fan",
-  "heatsink": "cpu fan",
-  "radiator": "cpu fan",
-
-  // 💻 GPU / Card đồ họa
-  "graphics card": "gpu",
-  "vga": "gpu",
-  "card màn hình": "gpu",
-  "card do hoa": "gpu",
-  "video card": "gpu",
-  "gpu card": "gpu",
-
-  // 🧠 Mainboard / Motherboard
-  "mainboard": "motherboard",
-  "bo mạch chủ": "motherboard",
-  "mo bo": "motherboard",
-  "mobo": "motherboard",
-  "board mạch": "motherboard",
-
-  // 💾 Ổ cứng
-  "hdd": "hard drive",
-  "ổ cứng hdd": "hard drive",
-  "ổ cứng cơ": "hard drive",
-  "harddisk": "hard drive",
-  "hard disk drive": "hard drive",
-
-  // ⚡ SSD
-  "ssd": "solid state",
-  "ổ cứng ssd": "solid state",
-  "solid drive": "solid state",
-  "solid state drive":"solid state",
-
-  // 🔋 RAM / Bộ nhớ
-  "ram": "memory",
-  "bộ nhớ ram": "memory",
-  "bộ nhớ tạm": "memory",
-  "random access memory": "memory",
-
-  // 🔌 PSU / Nguồn
-  "psu": "power supply",
-  "nguồn máy tính": "power supply",
-  "power adapter": "power supply",
-  "power unit": "power supply",
-  "bộ nguồn": "power supply",
-
-  // 🖥️ Case / Thùng máy
-  "case": "computer case",
-  "thùng máy": "computer case",
-  "vỏ máy tính": "computer case",
-  "vỏ case": "computer case",
-
-  // 🧊 CPU
-  "bộ xử lý": "cpu",
-  "vi xử lý": "cpu",
-  "processor": "cpu",
-  "central processing unit": "cpu",
-  "chip xử lý": "cpu",
-  "chip cpu": "cpu",
-
-  // 🔤 BIOS
-  "bios": "bios",
-  "uefi": "bios",
-  "firmware": "bios",
-
-  // 🖱️ Chuột
-  "chuột": "mouse",
-  "mouse": "mouse",
-  "computer mouse": "mouse",
-  "chuột máy tính": "mouse",
-
-  // ⌨️ Bàn phím
-  "bàn phím": "keyboard",
-  "keyboard": "keyboard",
-  "phím cơ": "keyboard",
-  "mechanical keyboard": "keyboard",
-
-  // 🖥️ Màn hình
-  "màn hình": "monitor",
-  "monitor": "monitor",
-  "display": "monitor",
-  "screen": "monitor",
-
+// 🔁 Danh sách đồng nghĩa mở rộng (tối ưu tối đa, giữ nguyên logic)
+const synonymGroups = {
+  "cpu fan": ["cooling fan", "cpu cooling fan", "fan cpu", "quạt tản nhiệt", "quạt cpu", "heatsink", "radiator"],// ⚙️ CPU & quạt
+  "gpu": ["graphics card", "vga", "card màn hình", "card do hoa", "video card", "gpu card"],// 💻 GPU / Card đồ họa
+  "motherboard": ["mainboard", "bo mạch chủ", "mo bo", "mobo", "board mạch"],// 🧠 Mainboard / Motherboard
+  "hard drive": ["hdd", "ổ cứng hdd", "ổ cứng cơ", "harddisk", "hard disk drive"],// 💾 Ổ cứng
+  "solid state": ["ssd", "ổ cứng ssd", "solid drive", "solid state drive"],// ⚡ SSD
+  "memory": ["ram", "bộ nhớ ram", "bộ nhớ tạm", "random access memory"],// 🔋 RAM
+  "power supply": ["psu", "nguồn máy tính", "power adapter", "power unit", "bộ nguồn"],// 🔌 PSU
+  "computer case": ["case", "thùng máy", "vỏ máy tính", "vỏ case"],// 🖥️ Case
+  "cpu": ["bộ xử lý", "vi xử lý", "processor", "central processing unit", "chip xử lý", "chip cpu"],// 🧊 CPU
+  "bios": ["bios", "uefi", "firmware"],// 🔤 BIOS
+  "mouse": ["chuột", "mouse", "computer mouse", "chuột máy tính"],// 🖱️ Chuột
+  "keyboard": ["bàn phím", "keyboard", "phím cơ", "mechanical keyboard"],// ⌨️ Bàn phím
+  "monitor": ["màn hình", "monitor", "display", "screen"],// 🖥️ Màn hình
+  "optical drive": ["ổ đĩa dvd", "ổ đĩa cd", "cd-rom", "dvd-rom"],// 💽 Ổ đĩa quang
+  "operating system": ["windows", "linux", "ubuntu", "macos", "os", "hệ điều hành"],// 💾 Hệ điều hành
+  "cloud storage": ["google drive", "onedrive", "icloud", "cloud"],// ☁️ Lưu trữ đám mây
+  "software": ["phần mềm", "app", "ứng dụng", "application", "chương trình"], // 🧰 Phần mềm
+  "hardware": ["phần cứng", "thiết bị vật lý", "hardware"],// 🔧 Phần cứng
   // 🔈 Âm thanh
-  "loa": "speaker",
-  "tai nghe": "headphone",
-  "headphone": "headphone",
-  "earphone": "headphone",
-  "microphone": "microphone",
-  "mic": "microphone",
-
+  "speaker": ["loa"],
+  "headphone": ["tai nghe", "headphone", "earphone"],
+  "microphone": ["microphone", "mic"],
   // 🌐 Internet / Mạng
-  "router": "router",
-  "modem": "router",
-  "switch mạng": "network switch",
-  "switch": "network switch",
-  "hub mạng": "network hub",
-  "hub": "network hub",
-  "wifi": "wireless network",
-  "mạng không dây": "wireless network",
-
+  "router": ["router", "modem"],
+  "network switch": ["switch mạng", "switch"],
+  "network hub": ["hub mạng", "hub"],
+  "wireless network": ["wifi", "mạng không dây"],
   // 🧰 Ổ đĩa ngoài
-  "usb": "flash drive",
-  "usb drive": "flash drive",
-  "ổ đĩa usb": "flash drive",
-  "ổ đĩa ngoài": "external drive",
-
-  // 💽 Ổ đĩa quang
-  "ổ đĩa dvd": "optical drive",
-  "ổ đĩa cd": "optical drive",
-  "cd-rom": "optical drive",
-  "dvd-rom": "optical drive",
-
-  // 💾 Hệ điều hành
-  "windows": "operating system",
-  "linux": "operating system",
-  "ubuntu": "operating system",
-  "macos": "operating system",
-  "os": "operating system",
-  "hệ điều hành": "operating system",
-
-  // 💾 Lưu trữ đám mây
-  "google drive": "cloud storage",
-  "onedrive": "cloud storage",
-  "icloud": "cloud storage",
-  "cloud": "cloud storage",
-
-  // 🧰 Phần mềm
-  "phần mềm": "software",
-  "app": "software",
-  "ứng dụng": "software",
-  "application": "software",
-  "chương trình": "software",
-
-  // 🔧 Phần cứng
-  "phần cứng": "hardware",
-  "thiết bị vật lý": "hardware",
-  "hardware": "hardware",
+  "flash drive": ["usb", "usb drive", "ổ đĩa usb"],
+  "external drive": ["ổ đĩa ngoài"],
 };
-
+const dup = Object.fromEntries(// 👉 Tự động chuyển nhóm thành object tra cứu (giữ nguyên kiểu dữ liệu)
+  Object.entries(synonymGroups).flatMap(([main, synonyms]) =>
+    synonyms.map(s => [s.toLowerCase(), main])
+  )
+);
 
 async function analyzeText(text) {
   try {
