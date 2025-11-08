@@ -1,8 +1,8 @@
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI("AIzaSyAVuDhgqspq0OuIe9Epc4THGup9E_j84ck");
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const genAI = new GoogleGenerativeAI(process.env.AI2);
+const model = genAI.getGenerativeModel({ model: process.env.MODELS });
 
 // ✅ Cache đơn giản
 const cache = new Map();
