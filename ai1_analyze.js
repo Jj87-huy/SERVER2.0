@@ -196,7 +196,7 @@ async function analyzeText(text) {
 
     return keywords || "unknown";
   } catch (err) {
-    console.error("[AI1/analyzeText]❌", err.message);
+    send.error("[AI1/analyzeText]❌", err.message);
     return "phân tích lỗi";
   }
 }
