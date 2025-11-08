@@ -1,6 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI("AIzaSyANjA9tNSStsTPzSUy6xByzDi_33UxlfIY");
+const genAI = new GoogleGenerativeAI("AIzaSyAmC9yci8D3f0dZLN8mb8OxXnwn9upo7TY");
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 async function checkSanity(text) {
