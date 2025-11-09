@@ -63,17 +63,6 @@ Nếu lỗi tải → fallback module tự động.
 - Cơ chế auto-scroll
 - LocalStorage lưu guestID
 
-### 🔹 Register UI
-- Kiểm tra độ mạnh mật khẩu
-- Kiểm tra email/phone hợp lệ
-- Hiệu ứng loading / toast message
-- Tuỳ chỉnh giao diện qua config
-
-### 🔹 Login UI
-- Login bằng email/password
-- Hiệu ứng toast + loading
-- Gợi ý demo login
-
 ---
 
 ## ✅ 6. Công nghệ sử dụng
@@ -127,8 +116,6 @@ Dự án đã xây dựng được **một hệ sinh thái AI đầy đủ**:
 ✅ ChatBot thông minh  
 ✅ Tự học nội dung  
 ✅ Hệ thống dữ liệu + CMS  
-✅ Khách giới hạn 20 lượt  
-✅ Tài khoản Basic/Premium  
 ✅ UI đẹp + dễ mở rộng
 
-Tiếp theo bạn muốn bổ sung phần nào?
+---
