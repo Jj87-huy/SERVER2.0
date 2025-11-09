@@ -6,7 +6,7 @@ Dự án này bao gồm **hệ thống ChatBot AI**, **backend Node.js với Mon
 
 ## ✅ 1. Chức năng chính
 
-### ### 🤖 ChatBot AI thông minh
+### 🤖 ChatBot AI thông minh
 - Nhận câu hỏi từ người dùng qua frontend.
 - Phân tích từ khóa bằng module AI1.
 - Kiểm tra câu hỏi hợp lệ (AI4 – sanity check).
@@ -56,51 +56,7 @@ Nếu lỗi tải → fallback module tự động.
 
 ---
 
-## ✅ 4. Hệ thống Guest – 20 lần dùng miễn phí
-API: **POST /guest**
-
-Mỗi khách (guest) có:
-- 20 lần request miễn phí
-- Tự tạo mã guestID và lưu trong localStorage
-
-Hết lượt → bắt buộc đăng ký tài khoản.
-
----
-
-## ✅ 5. Hệ thống tài khoản (Register / Login)
-Sử dụng MongoDB riêng cho user.
-
-### 🔐 Đăng ký: POST /auth/register
-User có cấu trúc:
-```json
-{
-  "username": "user001",
-  "password": "<hashed>",
-  "name": "Nguyễn Văn A",
-  "avatar": "link",
-  "email": { "mail": "abc@xyz.com", "verification": false },
-  "phone": { "number": "0123456789", "verification": false },
-  "linked_account": { "google": null, "facebook": null },
-  "role": { "basic": true, "premium": false },
-  "request_limit": 150
-}
-```
-
-### ✅ Loại tài khoản
-| Loại | Lượt dùng/ngày |
-|------|----------------|
-| Guest | 20 |
-| Basic | 150 |
-| Premium | Vô hạn |
-
-### ✅ Các tính năng bổ sung
-- Mã hóa mật khẩu bằng bcrypt
-- Kiểm tra trùng username/email
-- Chuẩn bị OAuth Google/Facebook
-
----
-
-## ✅ 6. Frontend (Chat UI + Auth UI)
+## ✅ 5. Frontend (Chat UI + Auth UI)
 ### 🔹 Chat UI
 - Gửi/nhận tin nhắn real-time
 - Hiển thị ảnh/video/link
@@ -120,7 +76,7 @@ User có cấu trúc:
 
 ---
 
-## ✅ 7. Công nghệ sử dụng
+## ✅ 6. Công nghệ sử dụng
 - **Node.js / Express** – server backend
 - **MongoDB Atlas** – lưu data + user
 - **Mongoose** – ORM
@@ -131,15 +87,12 @@ User có cấu trúc:
 
 ---
 
-## ✅ 8. Kiến trúc tổng quan
+## ✅ 7. Kiến trúc tổng quan
 ```
 Frontend (Chat + Auth)
      │
      ├── POST /chat → AI xử lý + DB Lookup
      ├── CRUD /data → CMS quản lý
-     ├── POST /guest → Giới hạn 20 lần
-     ├── POST /auth/register → Tạo user
-     └── POST /auth/login → Đăng nhập
 
 Backend Node.js
      ├── AI (tải từ GitHub)
@@ -151,7 +104,7 @@ AI Modules (GitHub Raw)
 
 ---
 
-## ✅ 9. Ứng dụng thực tế
+## ✅ 8. Ứng dụng thực tế
 - ChatBot hỗ trợ kỹ thuật IT
 - Hệ thống tự học từ câu hỏi người dùng
 - CMS chỉnh sửa câu trả lời
@@ -160,7 +113,7 @@ AI Modules (GitHub Raw)
 
 ---
 
-## ✅ 10. Hướng phát triển
+## ✅ 9. Hướng phát triển
 - Login bằng Google/Facebook
 - Nâng cấp UI Chat đẹp hơn
 - Tính năng Premium: lịch sử chat, lưu ghi chú
