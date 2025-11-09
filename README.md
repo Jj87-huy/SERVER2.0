@@ -92,7 +92,7 @@ Nếu lỗi tải → fallback module tự động.
 Frontend (Chat + Auth)
      │
      ├── POST /chat → AI xử lý + DB Lookup
-     ├── CRUD /data → CMS quản lý
+     └── CRUD /data → CMS quản lý
 
 Backend Node.js
      ├── AI (tải từ GitHub)
