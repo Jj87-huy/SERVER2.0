@@ -255,68 +255,77 @@ app.delete("/data/:id", async (req, res) => {
 // 🔥 RAM STORAGE — KHÔNG DÙNG FILE, KHÔNG GHI Ổ ĐĨA
 // ======================================================
 let MISSING_DATA = { version: "0.0.0" };
+
+
 // ======================================================
 // POST /missing — client gửi JSON missing
 // ======================================================
 app.post("/missing", (req, res) => {
-    const json = req.body;
-    if (!json || typeof json !== "object") { return res.status(400).json({ ok: false, error: "Invalid JSON" }); }
-    if (!json.version) { return res.status(400).json({ ok: false, error: "Missing version" }); }
-    // update version
-    MISSING_DATA.version = json.version;
-    // merge questions
-    let count = 0;
-    for (const key in json) {
-        if (key === "version") continue;
-        const item = json[key];
-        if (!item) continue;
-        MISSING_DATA[key] = {
-            content: item.content || "",
-            img: item.img || "",
-            video: item.video || "",
-            timestamp: item.timestamp || new Date().toISOString()
-        };
-        count++;
-    }
-    return res.json({ ok: true, saved: count });
+const json = req.body;
+if (!json || typeof json !== "object") {
+return res.status(400).json({ ok: false, error: "Invalid JSON" });
+}
+if (!json.version) {
+return res.status(400).json({ ok: false, error: "Missing version" });
+}
+// update version
+MISSING_DATA.version = json.version;
+// merge questions
+let count = 0;
+for (const key in json) {
+if (key === "version") continue;
+const item = json[key];
+if (!item) continue;
+MISSING_DATA[key] = {
+content: item.content || "",
+img: item.img || "",
+video: item.video || "",
+timestamp: item.timestamp || new Date().toISOString()
+};
+count++;
+}
+return res.json({ ok: true, saved: count });
 });
+
+
 // ======================================================
 // GET /missing-server — trả về missing đang giữ trong RAM
 // ======================================================
-app.get("/missing-server", (req, res) => { return res.json({ ok: true, data: MISSING_DATA }); });
+app.get("/missing-server", (req, res) => {
+return res.json({ ok: true, data: MISSING_DATA });
+});
+
+
 // ======================================================
 // GET /api/ai — server gọi OpenAI trả lời cho client
 // ======================================================
 async function askAI(content) {
-    const KEY = process.env.OPEN_AI_KEY;
-    if (!KEY) return "Server chưa có OPENAI_KEY";
-    try {
-        const r = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${KEY}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "gpt-4o-mini",
-                messages: [{ role: "user", content }],
-                temperature: 0.65
-            })
-        });
-        const j = await r.json();
-        return j.choices?.[0]?.message?.content || "Không có câu trả lời.";
-    } catch (err) {
-        return "AI ERROR: " + err.message;
-    }
-}
-app.get("/api/ai", async (req, res) => {
-    const content = req.query.content;
-    if (!content) return res.status(400).json({ ok: false, error: "Missing content" });
-
-    const answer = await askAI(content);
-    return res.json({ ok: true, answer });
+const KEY = process.env.OPEN_AI_KEY;
+if (!KEY) return "Server chưa có OPENAI_KEY";
+try {
+const r = await fetch("https://api.openai.com/v1/chat/completions", {
+method: "POST",
+headers: {
+Authorization: `Bearer ${KEY}`,
+"Content-Type": "application/json"
+},
+body: JSON.stringify({
+model: "gpt-4o-mini",
+messages: [{ role: "user", content }],
+temperature: 0.65
+})
 });
+const j = await r.json();
+return j.choices?.[0]?.message?.content || "Không có câu trả lời.";
+} catch (err) {
+return "AI ERROR: " + err.message;
+}
+}
 
+
+app.get("/api/ai", async (req, res) => {
+const content = req.query.content;
+if (!content) return res.status(400).json({ ok: false, error: "Missing content" });
 // ===========================
 // 🚀 Start Server
 // ===========================
