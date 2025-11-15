@@ -252,80 +252,150 @@ app.delete("/data/:id", async (req, res) => {
 });
 
 // ======================================================
-// 🔥 RAM STORAGE — KHÔNG DÙNG FILE, KHÔNG GHI Ổ ĐĨA
+// RAM storage for missing data
 // ======================================================
 let MISSING_DATA = { version: "0.0.0" };
 
-
 // ======================================================
-// POST /missing — client gửi JSON missing
+// POST /missing
+// Accept JSON format:
+// {
+//   "version": "0.1.0",
+//   "some question": { "content": "...", "img":"", "video":"", "timestamp": "..." },
+//   ...
+// }
+// Merges into MISSING_DATA
 // ======================================================
 app.post("/missing", (req, res) => {
-const json = req.body;
-if (!json || typeof json !== "object") {
-return res.status(400).json({ ok: false, error: "Invalid JSON" });
-}
-if (!json.version) {
-return res.status(400).json({ ok: false, error: "Missing version" });
-}
-// update version
-MISSING_DATA.version = json.version;
-// merge questions
-let count = 0;
-for (const key in json) {
-if (key === "version") continue;
-const item = json[key];
-if (!item) continue;
-MISSING_DATA[key] = {
-content: item.content || "",
-img: item.img || "",
-video: item.video || "",
-timestamp: item.timestamp || new Date().toISOString()
-};
-count++;
-}
-return res.json({ ok: true, saved: count });
+  try {
+    const json = req.body;
+    if (!json || typeof json !== "object") {
+      return res.status(400).json({ ok: false, error: "Invalid JSON" });
+    }
+    if (!json.version) {
+      return res.status(400).json({ ok: false, error: "Missing version property" });
+    }
+
+    // update version
+    MISSING_DATA.version = json.version;
+
+    let count = 0;
+    for (const key of Object.keys(json)) {
+      if (key === "version") continue;
+      const item = json[key];
+      if (!item || typeof item !== "object") continue;
+
+      MISSING_DATA[key] = {
+        content: item.content || "",
+        img: item.img || "",
+        video: item.video || "",
+        timestamp: item.timestamp || new Date().toISOString()
+      };
+      count++;
+    }
+
+    return res.json({ ok: true, saved: count });
+  } catch (err) {
+    console.error("POST /missing error:", err);
+    return res.status(500).json({ ok: false, error: err.message || "Server error" });
+  }
 });
 
-
 // ======================================================
-// GET /missing-server — trả về missing đang giữ trong RAM
+// GET /missing-server
+// returns the in-memory missing data
 // ======================================================
 app.get("/missing-server", (req, res) => {
-return res.json({ ok: true, data: MISSING_DATA });
+  return res.json({ ok: true, data: MISSING_DATA });
 });
 
-
 // ======================================================
-// GET /api/ai — server gọi OpenAI trả lời cho client
+// Helper: ask OpenAI (uses OPEN_AI_KEY from env)
 // ======================================================
 async function askAI(content) {
-const KEY = process.env.OPEN_AI_KEY;
-if (!KEY) return "Server chưa có OPENAI_KEY";
-try {
-const r = await fetch("https://api.openai.com/v1/chat/completions", {
-method: "POST",
-headers: {
-Authorization: `Bearer ${KEY}`,
-"Content-Type": "application/json"
-},
-body: JSON.stringify({
-model: "gpt-4o-mini",
-messages: [{ role: "user", content }],
-temperature: 0.65
-})
-});
-const j = await r.json();
-return j.choices?.[0]?.message?.content || "Không có câu trả lời.";
-} catch (err) {
-return "AI ERROR: " + err.message;
-}
+  const KEY = process.env.OPEN_AI_KEY;
+  if (!KEY) {
+    return "Server missing OPEN_AI_KEY (set env var OPEN_AI_KEY).";
+  }
+
+  try {
+    const response = await fetchDynamic("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content }],
+        temperature: 0.65
+      })
+    });
+
+    const j = await response.json();
+
+    // safe access
+    if (j?.choices && Array.isArray(j.choices) && j.choices[0]?.message?.content) {
+      return j.choices[0].message.content;
+    }
+
+    // if API returned error object
+    if (j?.error) {
+      console.error("OpenAI error:", j.error);
+      return `OpenAI error: ${j.error.message || JSON.stringify(j.error)}`;
+    }
+
+    return "Không có câu trả lời từ OpenAI.";
+  } catch (err) {
+    console.error("askAI fetch error:", err);
+    return "AI ERROR: " + (err.message || String(err));
+  }
 }
 
-
+// ======================================================
+// GET /api/ai?content=...
+// ======================================================
 app.get("/api/ai", async (req, res) => {
-const content = req.query.content;
-if (!content) return res.status(400).json({ ok: false, error: "Missing content" });
+  try {
+    const content = req.query.content;
+    if (!content) return res.status(400).json({ ok: false, error: "Missing content query parameter" });
+
+    const answer = await askAI(content);
+    return res.json({ ok: true, answer });
+  } catch (err) {
+    console.error("GET /api/ai error:", err);
+    return res.status(500).json({ ok: false, error: err.message || "Server error" });
+  }
+});
+
+// ======================================================
+// Optional: POST /upload-missing (server pushes missing to external endpoint)
+// If MISSING_UPLOAD_URL is set, this forwards the current MISSING_DATA there.
+// ======================================================
+app.post("/upload-missing", async (req, res) => {
+  if (!MISSING_UPLOAD_URL) return res.status(400).json({ ok: false, error: "MISSING_UPLOAD_URL not configured" });
+  try {
+    const fetchFn = fetchDynamic;
+    const r = await fetchFn(MISSING_UPLOAD_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(MISSING_DATA)
+    });
+    if (!r.ok) {
+      const text = await r.text().catch(() => "<no body>");
+      return res.status(500).json({ ok: false, status: r.status, body: text });
+    }
+    // On success we can clear RAM store or keep it — here we clear
+    MISSING_DATA = { version: "0.0.0" };
+    return res.json({ ok: true, msg: "Uploaded and cleared MISSING_DATA" });
+  } catch (err) {
+    console.error("POST /upload-missing error:", err);
+    return res.status(500).json({ ok: false, error: err.message || "Server error" });
+  }
+});
+
+// Health
+app.get("/health", (req, res) => res.json({ ok: true, now: new Date().toISOString() }));
 // ===========================
 // 🚀 Start Server
 // ===========================
